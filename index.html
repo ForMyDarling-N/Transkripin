@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f5f0e6">
+<title>SkripDima — Audio jadi Teks</title>
+<meta name="description" content="Ubah file audio jadi teks & terjemahan. Gratis, jalan di browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --cream: #f5f0e6;
+    --cream-2: #ece5d3;
+    --paper: #fdfaf3;
+    --ink: #0a0a0a;
+    --ink-soft: #4a4a4a;
+    --lime: #d4ff3a;
+    --lime-deep: #b8e600;
+    --orange: #ff6b35;
+    --pink: #ff5c9d;
+    --blue: #4a9eff;
+    --purple: #a78bfa;
+    --border: 2px solid var(--ink);
+    --shadow-sm: 3px 3px 0 var(--ink);
+    --shadow-md: 5px 5px 0 var(--ink);
+    --shadow-lg: 8px 8px 0 var(--ink);
+    --shadow-xl: 12px 12px 0 var(--ink);
+    --sans: 'Inter', system-ui, sans-serif;
+    --display: 'Space Grotesk', 'Inter', sans-serif;
+    --black: 'Archivo Black', 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    padding: 20px 14px 60px;
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(rgba(10,10,10,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(10,10,10,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    overflow-x: hidden;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 900px;
+    position: relative;
+  }
+
+  /* ============ FLOATING STICKERS ============ */
+  .sticker {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    z-index: 1;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .sticker.s1 {
+    top: 55px;
+    right: 24px;
+    background: var(--pink);
+    color: var(--paper);
+    transform: rotate(8deg);
+    animation: float1 3s ease-in-out infinite;
+  }
+  .sticker.s2 {
+    top: 300px;
+    left: -10px;
+    background: var(--blue);
+    color: var(--paper);
+    transform: rotate(-6deg);
+    animation: float2 3.5s ease-in-out infinite;
+  }
+  .sticker.s3 {
+    top: 460px;
+    right: 8px;
+    background: var(--orange);
+    color: var(--paper);
+    transform: rotate(5deg);
+    animation: float1 4s ease-in-out infinite;
+  }
+  @keyframes float1 {
+    0%, 100% { transform: rotate(8deg) translateY(0); }
+    50% { transform: rotate(8deg) translateY(-4px); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: rotate(-6deg) translateY(0); }
+    50% { transform: rotate(-6deg) translateY(4px); }
+  }
+
+  /* ============ MARQUEE ============ */
+  .marquee {
+    background: var(--ink);
+    color: var(--lime);
+    overflow: hidden;
+    border: var(--border);
+    border-bottom: none;
+    padding: 9px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: relative;
+    white-space: nowrap;
+  }
+  .marquee-track {
+    display: inline-block;
+    animation: marquee 24s linear infinite;
+    padding-left: 100%;
+  }
+  .marquee-track span { padding: 0 22px; }
+  .marquee-track .dot { color: var(--orange); }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* ============ MAIN CARD ============ */
+  .card {
+    background: var(--paper);
+    border: var(--border);
+    box-shadow: var(--shadow-xl);
+    position: relative;
+  }
+
+  /* ============ HERO (SPLIT) ============ */
+  .hero {
+    padding: 36px 32px 32px;
+    border-bottom: var(--border);
+    position: relative;
+    background: var(--paper);
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 32px;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .hero-left { position: relative; z-index: 2; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink);
+    color: var(--lime);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: var(--border);
+    box-shadow: 2px 2px 0 var(--orange);
+    transform: rotate(-2deg);
+    margin-bottom: 20px;
+  }
+  .badge .star { color: var(--orange); }
+
+  h1 {
+    font-family: var(--black);
+    font-weight: 400;
+    font-size: clamp(34px, 5.5vw, 56px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+  h1 .highlight {
+    background: var(--lime);
+    padding: 2px 10px;
+    border: var(--border);
+    box-shadow: 4px 4px 0 var(--ink);
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    margin: 3px 2px;
+    position: relative;
+  }
+  h1 .highlight.pink {
+    background: var(--pink);
+    color: var(--paper);
+    transform: rotate(1.5deg);
+  }
+  h1 .underline {
+    position: relative;
+    display: inline-block;
+  }
+  h1 .underline::after {
+    content: '';
+    position: absolute;
+    left: -4px; right: -4px; bottom: 2px;
+    height: 10px;
+    background: var(--orange);
+    z-index: -1;
+    transform: skew(-6deg);
+    border: 1.5px solid var(--ink);
+  }
+
+  .subtitle {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 440px;
+    font-weight: 500;
+    margin-bottom: 22px;
+  }
+
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pill {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--lime-deep);
+    border: 1.5px solid var(--ink);
+  }
+  .pill.pink .dot { background: var(--pink); }
+  .pill.blue .dot { background: var(--blue); }
+  .pill.orange .dot { background: var(--orange); }
+
+  /* HERO RIGHT - Visual Waveform */
+  .hero-right {
+    position: relative;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vinyl {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: spin 22s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(-8deg) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(-8deg) rotate(360deg); }
+  }
+  .vinyl::before {
+    content: '';
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    border: 2px dashed rgba(212,255,58,0.25);
+  }
+  .vinyl::after {
+    content: '';
+    position: absolute;
+    inset: 45px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,255,58,0.15);
+  }
+  .vinyl-center {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--lime);
+    border: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    letter-spacing: 0.1em;
+    transform: rotate(-3deg);
+    box-shadow: inset 0 0 0 3px var(--paper);
+    z-index: 1;
+  }
+  .vinyl-center span {
+    transform: rotate(3deg);
+    display: block;
+  }
+
+  /* Waveform bars floating over vinyl */
+  .waveform {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 40px;
+    padding: 6px 10px;
+    background: var(--paper);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    z-index: 3;
+  }
+  .waveform .bar {
+    width: 3px;
+    background: var(--ink);
+    border-radius: 1px;
+    animation: bounce 1.1s ease-in-out infinite;
+  }
+  .waveform .bar:nth-child(1) { height: 30%; animation-delay: 0s; }
+  .waveform .bar:nth-child(2) { height: 60%; animation-delay: 0.1s; background: var(--orange); }
+  .waveform .bar:nth-child(3) { height: 90%; animation-delay: 0.2s; }
+  .waveform .bar:nth-child(4) { height: 50%; animation-delay: 0.3s; background: var(--pink); }
+  .waveform .bar:nth-child(5) { height: 80%; animation-delay: 0.4s; }
+  .waveform .bar:nth-child(6) { height: 40%; animation-delay: 0.5s; background: var(--blue); }
+  .waveform .bar:nth-child(7) { height: 70%; animation-delay: 0.6s; }
+  .waveform .bar:nth-child(8) { height: 35%; animation-delay: 0.7s; }
+  .waveform .bar:nth-child(9) { height: 85%; animation-delay: 0.8s; background: var(--orange); }
+  .waveform .bar:nth-child(10) { height: 55%; animation-delay: 0.9s; }
+  @keyframes bounce {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.6); }
+  }
+
+  /* Doodle elements */
+  .doodle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .doodle.star1 {
+    top: -10px; left: 40%;
+    width: 30px;
+    animation: twirl 6s linear infinite;
+  }
+  .doodle.arrow1 {
+    bottom: 20px; right: 20px;
+    width: 50px;
+    transform: rotate(-20deg);
+  }
+  .doodle.burst {
+    top: 30px; left: -10px;
+    width: 46px;
+  }
+  @keyframes twirl {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ============ BODY ============ */
+  .body { padding: 32px; }
+
+  /* ============ STEP HEADER ============ */
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--lime);
+    width: 30px; height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border);
+    transform: rotate(-4deg);
+    flex-shrink: 0;
+    box-shadow: 2px 2px 0 var(--orange);
+  }
+  .step-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .section { margin-bottom: 28px; }
+
+  /* ============ DROPZONE ============ */
+  .dropzone {
+    background: var(--cream);
+    border: 2.5px dashed var(--ink);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    background: var(--lime);
+    border-style: solid;
+    transform: translate(-3px, -3px);
+    box-shadow: var(--shadow-md);
+  }
+  .dropzone.dragover {
+    background: var(--orange);
+    color: var(--paper);
+  }
+  .dz-icon {
+    width: 62px; height: 62px;
+    margin: 0 auto 16px;
+    background: var(--ink);
+    border: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lime);
+    transform: rotate(-4deg);
+    box-shadow: 5px 5px 0 var(--orange);
+    transition: all 0.2s;
+  }
+  .dropzone:hover .dz-icon, .dropzone.dragover .dz-icon {
+    transform: rotate(4deg) scale(1.05);
+  }
+  .dz-icon svg { width: 28px; height: 28px; }
+  .dz-text {
+    font-family: var(--black);
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .dz-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .dropzone.dragover .dz-hint { color: rgba(255,255,255,0.9); }
+  .file-badge {
+    display: none;
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: var(--paper);
+    border: var(--border);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    word-break: break-all;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .file-badge.visible { display: inline-block; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes pop {
+    0% { transform: scale(0.7) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  input[type=file] { display: none; }
+
+  audio {
+    width: 100%;
+    margin-top: 14px;
+    display: none;
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  audio.visible { display: block; }
+
+  /* ============ SELECT ============ */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▼';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    pointer-events: none;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  select {
+    width: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    border: var(--border);
+    padding: 13px 40px 13px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all 0.12s;
+    box-shadow: var(--shadow-sm);
+  }
+  select:hover:not(:disabled) {
+    background: var(--lime);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  select:focus {
+    outline: none;
+    background: var(--lime);
+    box-shadow: var(--shadow-md);
+    transform: translate(-2px, -2px);
+  }
+  select:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: var(--shadow-sm); transform: none; }
+
+  /* ============ SPEED ============ */
+  .speed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .speed-opt {
+    background: var(--paper);
+    border: var(--border);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    text-align: left;
+  }
+  .speed-opt:hover:not(.locked) {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-md);
+    background: var(--cream);
+  }
+  .speed-opt.active {
+    background: var(--lime);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-md);
+  }
+  .speed-opt.active::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 12px;
+    font-size: 16px;
+    font-weight: 900;
+  }
+  .speed-opt.locked { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: var(--shadow-sm); }
+  .speed-opt .lbl {
+    font-family: var(--black);
+    font-weight: 400;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    display: block;
+    text-transform: uppercase;
+  }
+  .speed-opt .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .speed-opt.active .meta { color: var(--ink); }
+
+  /* ============ BUTTON PRIMARY ============ */
+  .btn-primary {
+    width: 100%;
+    padding: 22px 24px;
+    background: var(--ink);
+    color: var(--lime);
+    border: var(--border);
+    font-family: var(--black);
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(212,255,58,0.08) 10px,
+      rgba(212,255,58,0.08) 20px
+    );
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover:not(:disabled)::before { opacity: 1; }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--lime);
+    color: var(--ink);
+    transform: translate(-4px, -4px);
+    box-shadow: var(--shadow-lg);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translate(0, 0);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:disabled {
+    background: var(--cream-2);
+    color: var(--ink-soft);
+    cursor: not-allowed;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary .arrow {
+    font-size: 22px;
+    transition: transform 0.2s;
+    font-family: var(--display);
+    font-weight: 700;
+  }
+  .btn-primary:hover:not(:disabled) .arrow { transform: translateX(6px); }
+
+  /* ============ PROGRESS ============ */
+  .progress {
+    height: 16px;
+    background: var(--cream);
+    border: var(--border);
+    margin-top: 14px;
+    overflow: hidden;
+    display: none;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+  .progress.active { display: block; }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--lime),
+      var(--lime) 10px,
+      var(--lime-deep) 10px,
+      var(--lime-deep) 20px
+    );
+    transition: width 0.3s ease;
+    border-right: var(--border);
+    animation: stripes 0.8s linear infinite;
+  }
+  @keyframes stripes {
+    from { background-position: 0 0; }
+    to { background-position: 40px 0; }
+  }
+
+  /* ============ STATUS ============ */
+  .status {
+    margin-top: 14px;
+    padding: 13px 16px;
+    background: var(--cream);
+    border: var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-sm);
+    letter-spacing: 0.01em;
+  }
+  .status .indicator {
+    width: 12px; height: 12px;
+    border: 1.5px solid var(--ink);
+    background: var(--ink-soft);
+    flex-shrink: 0;
+  }
+  .status.working { background: var(--lime); }
+  .status.working .indicator {
+    background: var(--orange);
+    animation: blink 0.9s infinite;
+  }
+  .status.error { background: #ffd6d6; }
+  .status.error .indicator { background: var(--orange); }
+  .status.success { background: var(--lime); }
+  .status.success .indicator { background: var(--ink); }
+  .status.warning { background: #ffe4b3; }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .status .msg { flex: 1; }
+
+  /* ============ OUTPUT ============ */
+  .output-section {
+    border-top: var(--border);
+    padding: 28px 32px 32px;
+    background: var(--cream);
+  }
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .output-title {
+    font-family: var(--black);
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .output-title::before {
+    content: '';
+    width: 10px; height: 10px;
+    background: var(--orange);
+    border: 1.5px solid var(--ink);
+    transform: rotate(45deg);
+  }
+  .output-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .transcript {
+    background: var(--paper);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    padding: 22px;
+    min-height: 180px;
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 15px;
+    line-height: 1.75;
+    font-weight: 500;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .transcript:empty::before {
+    content: 'Belum ada teks. Upload audio dulu di atas ↑';
+    color: var(--ink-soft);
+    font-style: italic;
+    font-weight: 400;
+  }
+  .transcript::-webkit-scrollbar { width: 10px; }
+  .transcript::-webkit-scrollbar-track { background: var(--cream); border-left: 1.5px solid var(--ink); }
+  .transcript::-webkit-scrollbar-thumb { background: var(--ink); border: 1.5px solid var(--ink); }
+
+  /* ============ ACTIONS ============ */
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .btn-action {
+    padding: 14px 10px;
+    background: var(--paper);
+    color: var(--ink);
+    border: var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-action:hover:not(:disabled) {
+    background: var(--lime);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-md);
+  }
+  .btn-action:active:not(:disabled) {
+    transform: translate(0, 0);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-action:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-action.dark {
+    background: var(--ink);
+    color: var(--lime);
+  }
+  .btn-action.dark:hover:not(:disabled) {
+    background: var(--orange);
+    color: var(--ink);
+  }
+  .btn-action svg { width: 14px; height: 14px; }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 20px 26px;
+    border-top: var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .footer-left { display: flex; align-items: center; gap: 12px; }
+  .footer-brand {
+    font-family: var(--black);
+    font-size: 15px;
+    color: var(--lime);
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .footer-links {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .footer-links span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .footer-links .dot {
+    width: 6px; height: 6px;
+    background: var(--lime);
+    border-radius: 50%;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 780px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 28px 24px 24px;
+    }
+    .hero-right {
+      height: 220px;
+    }
+    .vinyl { width: 200px; height: 200px; }
+    .vinyl-center { width: 76px; height: 76px; font-size: 8px; }
+    .sticker.s1 { top: 40px; right: 16px; font-size: 9px; }
+    .sticker.s2 { top: 220px; left: 4px; font-size: 9px; }
+    .sticker.s3 { display: none; }
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 12px 8px 40px; }
+    .hero { padding: 24px 20px 22px; }
+    .body { padding: 22px 18px; }
+    .output-section { padding: 22px 18px 24px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .speed-grid { grid-template-columns: 1fr; }
+    .speed-opt.active::after { top: 50%; transform: translateY(-50%); }
+    .actions { grid-template-columns: 1fr 1fr; }
+    .dropzone { padding: 28px 14px; }
+    .btn-primary { font-size: 15px; padding: 18px; }
+    .footer { flex-direction: column; align-items: flex-start; padding: 16px 20px; }
+    .marquee { font-size: 10.5px; }
+    h1 { font-size: 30px; }
+    .doodle.arrow1 { width: 36px; }
+    .doodle.burst { width: 34px; }
+    .sticker { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- FLOATING STICKERS -->
+  <div class="sticker s1">★ No. 1 Transkrip</div>
+  <div class="sticker s2">Gratis</div>
+  <div class="sticker s3">17+ Bahasa</div>
+
+  <!-- MARQUEE -->
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>Gratis selamanya <span class="dot">●</span></span>
+      <span>Nggak ada upload <span class="dot">●</span></span>
+      <span>Jalan di browser <span class="dot">●</span></span>
+      <span>17+ bahasa <span class="dot">●</span></span>
+      <span>Transkrip & terjemah <span class="dot">●</span></span>
+      <span>Download TXT + SRT <span class="dot">●</span></span>
+      <span>Tanpa login <span class="dot">●</span></span>
+      <span>Privasi aman <span class="dot">●</span></span>
+      <span>Gratis selamanya <span class="dot">●</span></span>
+      <span>Nggak ada upload <span class="dot">●</span></span>
+      <span>Jalan di browser <span class="dot">●</span></span>
+      <span>17+ bahasa <span class="dot">●</span></span>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- HERO SPLIT -->
+    <div class="hero">
+      <!-- Doodles -->
+      <svg class="doodle star1" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 2 L24 16 L38 16 L27 25 L31 39 L20 30 L9 39 L13 25 L2 16 L16 16 Z" fill="#ff6b35" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg class="doodle burst" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30 5 L33 22 L50 12 L38 27 L55 30 L38 33 L50 48 L33 38 L30 55 L27 38 L10 48 L22 33 L5 30 L22 27 L10 12 L27 22 Z" fill="#ff5c9d" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg class="doodle arrow1" viewBox="0 0 80 40" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M5 30 Q 25 5, 50 20 T 75 15" stroke="#0a0a0a" stroke-width="3" stroke-linecap="round"/>
+        <path d="M65 8 L75 15 L63 22" stroke="#0a0a0a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+
+      <div class="hero-left">
+        <div class="badge">
+          <span class="star">★</span> Speech-to-text engine
+        </div>
+        <h1>
+          Ubah<br>
+          <span class="highlight">audio</span> jadi<br>
+          <span class="highlight pink">teks</span> dalam<br>
+          <span class="underline">hitungan detik.</span>
+        </h1>
+        <p class="subtitle">
+          Upload file audio, pilih bahasa, langsung dapat transkrip. Semua diproses di HP/laptop kamu — nggak ada yang dikirim ke server.
+        </p>
+        <div class="features">
+          <span class="pill"><span class="dot"></span> 100% gratis</span>
+          <span class="pill pink"><span class="dot"></span> Tanpa login</span>
+          <span class="pill blue"><span class="dot"></span> Tanpa batas</span>
+          <span class="pill orange"><span class="dot"></span> Privasi aman</span>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="vinyl">
+          <div class="vinyl-center">
+            <span>SKRIP<br>DIMA</span>
+          </div>
+        </div>
+        <div class="waveform">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+
+      <!-- STEP 01 -->
+      <div class="section">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-title">Upload Audio</div>
+        </div>
+        <div class="dropzone" id="dropzone">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="dz-text">Klik atau seret file ke sini</div>
+          <div class="dz-hint">MP3 · WAV · OGG · M4A · WEBM · FLAC</div>
+          <div class="file-badge" id="fileBadge"></div>
+        </div>
+        <input type="file" id="audioInput" accept="audio/*,.mp3,.wav,.ogg,.m4a,.webm,.flac,.aac,.opus">
+        <audio id="audioPlayer" controls></audio>
+      </div>
+
+      <!-- STEP 02 -->
+      <div class="section">
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-title">Bahasa</div>
+        </div>
+        <div class="grid-2">
+          <div class="select-wrap">
+            <select id="sourceLang">
+              <option value="">Deteksi otomatis</option>
+              <option value="indonesian">Indonesia</option>
+              <option value="english">English</option>
+              <option value="malay">Melayu</option>
+              <option value="japanese">日本語</option>
+              <option value="korean">한국어</option>
+              <option value="chinese">中文</option>
+              <option value="arabic">العربية</option>
+              <option value="spanish">Español</option>
+              <option value="french">Français</option>
+              <option value="german">Deutsch</option>
+              <option value="thai">ไทย</option>
+              <option value="vietnamese">Tiếng Việt</option>
+              <option value="hindi">हिन्दी</option>
+              <option value="russian">Русский</option>
+              <option value="portuguese">Português</option>
+              <option value="italian">Italiano</option>
+              <option value="turkish">Türkçe</option>
+            </select>
+          </div>
+          <div class="select-wrap">
+            <select id="targetLang">
+              <option value="same">Transkrip saja</option>
+              <option value="english">→ English</option>
+              <option value="indonesian">→ Indonesia</option>
+              <option value="malay">→ Melayu</option>
+              <option value="japanese">→ 日本語</option>
+              <option value="korean">→ 한국어</option>
+              <option value="chinese">→ 中文</option>
+              <option value="arabic">→ العربية</option>
+              <option value="spanish">→ Español</option>
+              <option value="french">→ Français</option>
+              <option value="german">→ Deutsch</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 03 -->
+      <div class="section">
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-title">Kecepatan</div>
+        </div>
+        <div class="speed-grid" id="speedGrid">
+          <div class="speed-opt" data-model="Xenova/whisper-tiny">
+            <span class="lbl">Cepat</span>
+            <span class="meta">Fast</span>
+          </div>
+          <div class="speed-opt active" data-model="Xenova/whisper-base">
+            <span class="lbl">Seimbang</span>
+            <span class="meta">Balanced</span>
+          </div>
+          <div class="speed-opt" data-model="Xenova/whisper-small">
+            <span class="lbl">Akurat</span>
+            <span class="meta">Precise</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 04 -->
+      <div class="section" style="margin-bottom:0;">
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-title">Jalankan</div>
+        </div>
+        <button class="btn-primary" id="startBtn" disabled>
+          <span>Mulai Transkripsi</span>
+          <span class="arrow">→</span>
+        </button>
+        <div class="progress" id="progress">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="status" id="statusBox">
+          <span class="indicator"></span>
+          <span class="msg" id="statusMsg">Menunggu file audio...</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-section">
+      <div class="output-header">
+        <div class="output-title">Hasil Transkripsi</div>
+        <div class="output-count" id="outputCount">0 karakter</div>
+      </div>
+      <div class="transcript" id="transcript"></div>
+      <div class="actions">
+        <button class="btn-action" id="copyBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy
+        </button>
+        <button class="btn-action dark" id="downloadTxtBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          .TXT
+        </button>
+        <button class="btn-action dark" id="downloadSrtBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          .SRT
+        </button>
+        <button class="btn-action" id="clearBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footer-left">
+        <span class="footer-brand">SkripDima®</span>
+      </div>
+      <div class="footer-links">
+        <span><span class="dot"></span> On-device</span>
+        <span><span class="dot"></span> Whisper AI</span>
+        <span><span class="dot"></span> Free · Unlimited</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+const $ = (id) => document.getElementById(id);
+const audioInput = $('audioInput');
+const dropzone = $('dropzone');
+const fileBadge = $('fileBadge');
+const audioPlayer = $('audioPlayer');
+const startBtn = $('startBtn');
+const copyBtn = $('copyBtn');
+const downloadTxtBtn = $('downloadTxtBtn');
+const downloadSrtBtn = $('downloadSrtBtn');
+const clearBtn = $('clearBtn');
+const transcript = $('transcript');
+const outputCount = $('outputCount');
+const statusBox = $('statusBox');
+const statusMsg = $('statusMsg');
+const sourceLang = $('sourceLang');
+const targetLang = $('targetLang');
+const speedGrid = $('speedGrid');
+const progress = $('progress');
+const progressFill = $('progressFill');
+
+let currentFile = null;
+let transcriber = null;
+let loadedModelId = null;
+let isProcessing = false;
+let selectedModel = 'Xenova/whisper-base';
+let lastChunks = [];
+
+speedGrid.addEventListener('click', (e) => {
+  if (isProcessing) return;
+  const opt = e.target.closest('.speed-opt');
+  if (!opt || opt.classList.contains('locked')) return;
+  document.querySelectorAll('.speed-opt').forEach(el => el.classList.remove('active'));
+  opt.classList.add('active');
+  selectedModel = opt.dataset.model;
+});
+
+function setStatus(msg, type = 'info') {
+  statusMsg.textContent = msg;
+  statusBox.className = 'status' + (type !== 'info' ? ' ' + type : '');
+}
+function setProgress(pct) {
+  if (pct === null) {
+    progress.classList.remove('active');
+    progressFill.style.width = '0%';
+  } else {
+    progress.classList.add('active');
+    progressFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  }
+}
+function setBusy(busy) {
+  isProcessing = busy;
+  startBtn.disabled = busy || !currentFile;
+  sourceLang.disabled = busy;
+  targetLang.disabled = busy;
+  dropzone.style.pointerEvents = busy ? 'none' : 'auto';
+  dropzone.style.opacity = busy ? '0.5' : '1';
+  document.querySelectorAll('.speed-opt').forEach(el => el.classList.toggle('locked', busy));
+}
+
+dropzone.addEventListener('click', () => { if (!isProcessing) audioInput.click(); });
+dropzone.addEventListener('dragover', e => { e.preventDefault(); if (!isProcessing) dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (!isProcessing && e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+audioInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const isAudio = file.type.startsWith('audio/') ||
+    /\.(mp3|wav|ogg|m4a|webm|flac|aac|opus)$/i.test(file.name);
+  if (!isAudio) { setStatus('File harus berupa audio.', 'error'); return; }
+
+  currentFile = file;
+  fileBadge.textContent = `📎 ${file.name}`;
+  fileBadge.classList.add('visible');
+  audioPlayer.src = URL.createObjectURL(file);
+  audioPlayer.classList.add('visible');
+  startBtn.disabled = false;
+  setStatus('File siap. Klik "Mulai Transkripsi".', 'success');
+}
+
+async function getTranscriber(modelId) {
+  if (transcriber && loadedModelId === modelId) return transcriber;
+  transcriber = null;
+  loadedModelId = null;
+
+  setStatus('Menyiapkan mesin AI...', 'working');
+  setProgress(2);
+
+  const instance = await pipeline('automatic-speech-recognition', modelId, {
+    quantized: true,
+    progress_callback: (p) => {
+      if (p.status === 'progress' && p.total) {
+        const pct = Math.min(90, Math.round((p.loaded / p.total) * 90));
+        setProgress(pct);
+        setStatus(`Menyiapkan... ${pct}%`, 'working');
+      } else if (p.status === 'ready') {
+        setStatus('Mesin siap. Menyiapkan audio...', 'working');
+      }
+    }
+  });
+  transcriber = instance;
+  loadedModelId = modelId;
+  setProgress(null);
+  return transcriber;
+}
+
+async function decodeAudio(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) throw new Error('Browser tidak mendukung Web Audio API.');
+
+  const ctx = new AudioCtx({ sampleRate: 16000 });
+  let decoded;
+  try {
+    decoded = await ctx.decodeAudioData(arrayBuffer.slice(0));
+  } finally {
+    if (ctx.state !== 'closed') await ctx.close();
+  }
+
+  const ch0 = decoded.getChannelData(0);
+  if (decoded.numberOfChannels === 1) return ch0;
+
+  const out = new Float32Array(ch0.length);
+  const channels = [];
+  for (let c = 0; c < decoded.numberOfChannels; c++) channels.push(decoded.getChannelData(c));
+  for (let i = 0; i < out.length; i++) {
+    let sum = 0;
+    for (let c = 0; c < channels.length; c++) sum += channels[c][i];
+    out[i] = sum / channels.length;
+  }
+  return out;
+}
+
+async function transcribeChunks(transcriber, audioData, lang, task) {
+  const SAMPLE_RATE = 16000;
+  const CHUNK_SEC = 30;
+  const STRIDE_SEC = 5;
+  const chunkLen = CHUNK_SEC * SAMPLE_RATE;
+  const strideLen = STRIDE_SEC * SAMPLE_RATE;
+  const step = chunkLen - strideLen;
+
+  const totalSamples = audioData.length;
+  const chunks = [];
+  let offset = 0;
+
+  while (offset < totalSamples) {
+    const end = Math.min(offset + chunkLen, totalSamples);
+    const slice = audioData.slice(offset, end);
+
+    const opts = { task, return_timestamps: false };
+    if (lang) opts.language = lang;
+
+    const res = await transcriber(slice, opts);
+    const text = (res?.text || '').trim();
+    if (text) chunks.push({ start: offset / SAMPLE_RATE, end: end / SAMPLE_RATE, text });
+
+    if (end >= totalSamples) break;
+    offset += step;
+  }
+  return chunks;
+}
+
+function formatTimeSRT(sec) {
+  const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+  const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  const ms = Math.floor((sec % 1) * 1000).toString().padStart(3, '0');
+  return `${h}:${m}:${s},${ms}`;
+}
+function toSRT(chunks) {
+  return chunks.map((c, i) =>
+    `${i + 1}\n${formatTimeSRT(c.start)} --> ${formatTimeSRT(c.end)}\n${c.text}\n`
+  ).join('\n');
+}
+
+startBtn.addEventListener('click', async () => {
+  if (!currentFile || isProcessing) return;
+
+  setBusy(true);
+  copyBtn.disabled = true;
+  downloadTxtBtn.disabled = true;
+  downloadSrtBtn.disabled = true;
+  transcript.textContent = '';
+  outputCount.textContent = '0 karakter';
+  lastChunks = [];
+
+  try {
+    const transcriber = await getTranscriber(selectedModel);
+
+    setStatus('Membaca audio...', 'working');
+    const audioData = await decodeAudio(currentFile);
+    if (!audioData || audioData.length === 0) throw new Error('Audio kosong atau gagal didecode.');
+
+    const srcLang = sourceLang.value || undefined;
+    const tgtLang = targetLang.value;
+    const doTranslate = tgtLang !== 'same';
+
+    setStatus('Mentranskripsi... mohon tunggu.', 'working');
+    setProgress(95);
+
+    let finalText = '';
+    let chunks = [];
+
+    if (!doTranslate) {
+      chunks = await transcribeChunks(transcriber, audioData, srcLang, 'transcribe');
+      finalText = chunks.map(c => c.text).join(' ').trim();
+    } else if (tgtLang === 'english') {
+      setStatus('Menerjemahkan ke English...', 'working');
+      chunks = await transcribeChunks(transcriber, audioData, srcLang, 'translate');
+      finalText = chunks.map(c => c.text).join(' ').trim();
+    } else {
+      chunks = await transcribeChunks(transcriber, audioData, srcLang, 'transcribe');
+      const sourceText = chunks.map(c => c.text).join(' ').trim();
+      setStatus('Menerjemahkan...', 'working');
+      finalText = await translateText(sourceText, tgtLang);
+    }
+
+    transcript.textContent = finalText || '(Tidak ada teks terdeteksi)';
+    outputCount.textContent = `${finalText.length} karakter`;
+    lastChunks = chunks;
+    setProgress(null);
+
+    if (finalText) {
+      setStatus('Selesai!', 'success');
+      copyBtn.disabled = false;
+      downloadTxtBtn.disabled = false;
+      downloadSrtBtn.disabled = chunks.length === 0;
+    } else {
+      setStatus('Selesai tapi tidak ada teks terdeteksi.', 'warning');
+    }
+  } catch (err) {
+    console.error(err);
+    setProgress(null);
+    let msg = err?.message || String(err);
+    if (/memory|out of memory/i.test(msg)) msg = 'Memori browser habis. Coba mode "Cepat" atau audio lebih pendek.';
+    setStatus(msg, 'error');
+  } finally {
+    setBusy(false);
+  }
+});
+
+let translatorCache = {};
+async function translateText(text, targetCode) {
+  const langMap = {
+    indonesian: 'id', malay: 'ms', japanese: 'jap', korean: 'ko',
+    chinese: 'zh', arabic: 'ar', spanish: 'es', french: 'fr',
+    german: 'de', thai: 'th', vietnamese: 'vi', hindi: 'hi',
+    russian: 'ru', portuguese: 'pt', italian: 'it', turkish: 'tr'
+  };
+  const tgt = langMap[targetCode] || targetCode;
+  const modelId = `Xenova/opus-mt-en-${tgt}`;
+
+  if (!translatorCache[modelId]) {
+    translatorCache[modelId] = await pipeline('translation', modelId, { quantized: true });
+  }
+  const translator = translatorCache[modelId];
+
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+  const results = [];
+  for (const s of sentences) {
+    const out = await translator(s, { max_length: 512 });
+    results.push(out[0]?.translation_text || s);
+  }
+  return results.join(' ');
+}
+
+copyBtn.addEventListener('click', async () => {
+  const text = transcript.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  const old = copyBtn.innerHTML;
+  copyBtn.textContent = '✓ Copied!';
+  setTimeout(() => copyBtn.innerHTML = old, 1500);
+});
+
+function download(filename, content) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+downloadTxtBtn.addEventListener('click', () => {
+  const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'transcript';
+  download(baseName + '.txt', transcript.textContent);
+});
+
+downloadSrtBtn.addEventListener('click', () => {
+  const baseName = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'transcript';
+  download(baseName + '.srt', toSRT(lastChunks));
+});
+
+clearBtn.addEventListener('click', () => {
+  transcript.textContent = '';
+  outputCount.textContent = '0 karakter';
+  lastChunks = [];
+  copyBtn.disabled = true;
+  downloadTxtBtn.disabled = true;
+  downloadSrtBtn.disabled = true;
+  setStatus('Dibersihkan.', 'info');
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if (isProcessing) { e.preventDefault(); e.returnValue = ''; }
+});
+</script>
+</body>
+</htm>
